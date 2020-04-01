@@ -166,13 +166,25 @@ public class Table {
 	}
 	
 	public void startGame() {
-		System.out.println("The game has started. Good luck !");
 		this.displayInfo();
 		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
 		while(!this.movePiece()) {};
 	}
 	
 	public boolean movePiece() {
+		Scanner sc = new Scanner(System.in);
+		String[] input = sc.nextLine().split(" ");
+		if(
+			input.length != 2 || input[0].length() != 2 || input[1].length() != 2 ||
+			Character.toLowerCase(input[0].charAt(0)) < 'a' || Character.toLowerCase(input[0].charAt(0)) > 'h' ||
+			input[1].charAt(0) < '1' || input[1].charAt(1) > '8'
+		) {
+			System.out.println("Invalid format. Please use format A2 A4");
+			return false;
+		}
+		else {
+			System.out.println("Valid");
+		}
 		return false;
 	}
 	
