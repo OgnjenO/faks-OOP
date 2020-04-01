@@ -7,7 +7,7 @@ public class Knight extends Piece {
 	}
 
 	@Override
-	boolean movePeace(int[] oldPos, int[] newPos) {
+	boolean movePiece(int[] oldPos, int[] newPos) {
 		if(this.absDiff(oldPos[0], newPos[0]) == 2) {
 			if(this.absDiff(oldPos[1], newPos[1]) == 1)
 				return true;

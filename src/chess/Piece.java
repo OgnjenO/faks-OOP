@@ -12,7 +12,7 @@ public abstract class Piece {
 		this.color = color;
 	}
 
-	abstract boolean movePeace(int[] oldPos, int[] newPos);
+	abstract boolean movePiece(int[] oldPos, int[] newPos);
 
 	public String getName() {
 		return name;

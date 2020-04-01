@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Table {
 	private Player[] players = new Player[2];
 	private Piece[][] table = new Piece[8][8];
-	private String turn;
+	private int turn;
 	
 	public Table() {
 		this.setupTable();
@@ -73,7 +73,7 @@ public class Table {
 	}
 	
 	public void setupTable() {
-		this.turn = null;
+		this.turn = -1;
 		for(int i=0; i<8; i++) {
 			this.table[i][1] = new Pawn("White");
 			this.table[i][6] = new Pawn("Black");
@@ -115,9 +115,9 @@ public class Table {
 			this.players[index].setColor("White");
 			System.out.println("BLACK : " + this.players[1-index].getName());
 			this.players[1-index].setColor("Black");
-			System.out.println("To move a piece specify the starting position and then the ending position (ex. A2 A4)");
+			System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
+			this.turn = index;
 			this.setupPlayers();
-			this.turn = "White";
 			sc.close();
 			return true;
 		}
@@ -139,9 +139,9 @@ public class Table {
 					this.players[in].setColor("White");
 					System.out.println("BLACK : " + this.players[1-in].getName());
 					this.players[1-in].setColor("Black");
-					System.out.println("To move a piece specify the starting position and then the ending position (ex. A2 A4)");
+					System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
+					this.turn = in;
 					this.setupPlayers();
-					this.turn = "White";
 					sc.close();
 					return true;
 				}
@@ -162,11 +162,27 @@ public class Table {
 	public void setupPlayers() {
 		this.players[0].setupPlayer();
 		this.players[1].setupPlayer();
+		this.startGame();
+	}
+	
+	public void startGame() {
+		System.out.println("The game has started. Good luck !");
+		this.displayInfo();
+		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+		while(!this.movePiece()) {};
+	}
+	
+	public boolean movePiece() {
+		return false;
 	}
 	
 	public void displayInfo() {
 		String output = "";
+		if(this.players[0] == null)
+			return;
 		output += this.players[0].toString() + "\n";
+		if(this.players[1] == null)
+			return;
 		output += this.players[1].toString() + "\n";
 		for(int j=0; j<8; j++) {
 			for(int i=0; i<8; i++) {

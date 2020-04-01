@@ -7,7 +7,7 @@ public class Bishop extends Piece {
 	}
 
 	@Override
-	boolean movePeace(int[] oldPos, int[] newPos) {
+	boolean movePiece(int[] oldPos, int[] newPos) {
 		if(this.checkDiagonal(oldPos, newPos))
 			return true;
 		else

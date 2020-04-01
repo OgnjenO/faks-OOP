@@ -7,7 +7,7 @@ public class Rook extends Piece {
 	}
 
 	@Override
-	boolean movePeace(int[] oldPos, int[] newPos) {
+	boolean movePiece(int[] oldPos, int[] newPos) {
 		if(this.checkStraight(oldPos, newPos))
 			return true;
 		else
