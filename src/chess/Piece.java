@@ -10,6 +10,7 @@ public abstract class Piece {
 		this.name = name;
 		this.mark = mark;
 		this.color = color;
+		if(this.color == "Black") this.mark = Character.toUpperCase(this.mark);
 	}
 
 	abstract boolean movePiece(int[] oldPos, int[] newPos);
@@ -36,17 +37,18 @@ public abstract class Piece {
 
 	public void setColor(String color) {
 		this.color = color;
+		if(this.color == "Black") this.mark = Character.toUpperCase(this.mark);
 	}
 
 	public boolean checkDiagonal(int[] oldPos, int[] newPos) {
-		if(Math.abs(oldPos[0]-newPos[0]) == Math.abs(oldPos[1]-newPos[1]))
+		if(Math.abs(oldPos[1]-newPos[1]) == Math.abs(oldPos[0]-newPos[0]))
 			return true;
 		else
 			return false;
 	}
 	
 	public boolean checkStraight(int[] oldPos, int[] newPos) {
-		if((oldPos[0] == newPos[0] || oldPos[1] == newPos[1]))
+		if((oldPos[1] == newPos[1] || oldPos[0] == newPos[0]))
 			return true;
 		else
 			return false;

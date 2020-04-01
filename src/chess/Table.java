@@ -78,26 +78,26 @@ public class Table {
 		sc = new Scanner(System.in);
 		this.turn = -1;
 		for(int i=0; i<8; i++) {
-			this.table[i][1] = new Pawn("White");
-			this.table[i][6] = new Pawn("Black");
+			this.table[1][i] = new Pawn("White");
+			this.table[6][i] = new Pawn("Black");
 		}
 		this.table[0][0] = new Rook("White");
-		this.table[7][0] = new Rook("White");
-		this.table[1][0] = new Knight("White");
-		this.table[6][0] = new Knight("White");
-		this.table[2][0] = new Bishop("White");
-		this.table[5][0] = new Bishop("White");
-		this.table[3][0] = new Queen("White");
-		this.table[4][0] = new King("White");
+		this.table[0][7] = new Rook("White");
+		this.table[0][1] = new Knight("White");
+		this.table[0][6] = new Knight("White");
+		this.table[0][2] = new Bishop("White");
+		this.table[0][5] = new Bishop("White");
+		this.table[0][3] = new Queen("White");
+		this.table[0][4] = new King("White");
 
-		this.table[0][7] = new Rook("Black");
+		this.table[7][0] = new Rook("Black");
 		this.table[7][7] = new Rook("Black");
-		this.table[1][7] = new Knight("Black");
-		this.table[6][7] = new Knight("Black");
-		this.table[2][7] = new Bishop("Black");
-		this.table[5][7] = new Bishop("Black");
-		this.table[3][7] = new Queen("Black");
-		this.table[4][7] = new King("Black");
+		this.table[7][1] = new Knight("Black");
+		this.table[7][6] = new Knight("Black");
+		this.table[7][2] = new Bishop("Black");
+		this.table[7][5] = new Bishop("Black");
+		this.table[7][3] = new Queen("Black");
+		this.table[7][4] = new King("Black");
 		
 		System.out.println("Table setup completed");
 	}
@@ -169,6 +169,7 @@ public class Table {
 			this.displayInfo();
 			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
 			while(!this.movePiece());
+			this.turn = 1 - this.turn;
 		}
 	}
 	
@@ -182,32 +183,71 @@ public class Table {
 		}
 		
 		char[] in = {Character.toLowerCase(input[0].charAt(0)), input[0].charAt(1), Character.toLowerCase(input[1].charAt(0)), input[1].charAt(1)};
-		int[] oldPos = {(int) in[0]-(int) 'a', (int) in[1] - (int) '1'};
-		int[] newPos = {(int) in[2]-(int) 'a', (int) in[3] - (int) '1'};
+		int[] oldPos = {(int) in[1]-(int) '1', (int) in[0] - (int) 'a'};
+		int[] newPos = {(int) in[3]-(int) '1', (int) in[2] - (int) 'a'};
 		if(oldPos[0] < 0 || oldPos[0] > 7 || oldPos[1] < 0 || oldPos[1] > 7 || newPos[0] < 0 || newPos[0] > 7 || newPos[1] < 0 || newPos[1] > 7) {
 			System.out.println("Invalid input. Please use A-H and 1-8");
 			return false;
 		}
 		
+		if(table[oldPos[0]][oldPos[1]] == null) {
+			System.out.println("Invalid input. Selected space is empty, nothing to move");
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getColor() != this.players[this.turn].getColor()) {
+			System.out.println("Invalid input. You can only move your (" + this.players[this.turn].getColor() + ") pieces");
+			return false;
+		}
+
+		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == this.players[this.turn].getColor()) {
+			System.out.println("Invalid input. You can not stack your pieces on top of each other");
+			return false;
+		}
+		
+		if(!table[oldPos[0]][oldPos[1]].movePiece(oldPos, newPos)) {
+			System.out.println("Invalid input. You can not move your pieces that way");
+			System.out.println(Arrays.toString(oldPos) + Arrays.toString(newPos));
+			return false;
+		}
+		
+		Piece p = table[oldPos[0]][oldPos[1]];
+		
+		System.out.print(p.getName() + " (" + p.getColor() + ") " + input[0] + " -> " + input[1]);
+		p = table[newPos[0]][newPos[1]];
+		if(p != null) {
+			System.out.print("   |   Took " + p.getName());
+		}
+		System.out.println();
+		table[newPos[0]][newPos[1]] = table[oldPos[0]][oldPos[1]];
+		table[oldPos[0]][oldPos[1]] = null;
+		
 		return true;
 	}
 	
 	public void displayInfo() {
-		String output = "";
+		String output = "\n\n";
 		if(this.players[0] == null)
 			return;
 		output += this.players[0].toString() + "\n";
 		if(this.players[1] == null)
 			return;
 		output += this.players[1].toString() + "\n";
-		for(int j=0; j<8; j++) {
-			for(int i=0; i<8; i++) {
+		output += "       ---   ---   ---   ---   ---   ---   ---   ---\n";
+		for(int i=7; i>=0; i--) {
+			output += i+1 + "     ";
+			for(int j=0; j<8; j++) {
 				if(table[i][j] != null)
-					output += table[i][j].getMark() + " ";
+					output += "| " + table[i][j].getMark() + " | ";
 				else
-					output += "  ";
+					output += "|   | ";
 			}
-			output += "\n";
+			output += "\n       ---   ---   ---   ---   ---   ---   ---   ---\n";
+		}
+		output += "\n\n        ";
+		
+		for(int j=0; j<8; j++) {
+			output += (char) (j+(int) 'A') + "     ";
 		}
 		System.out.println(output);
 	}
