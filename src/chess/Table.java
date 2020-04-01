@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -7,6 +8,7 @@ public class Table {
 	private Player[] players = new Player[2];
 	private Piece[][] table = new Piece[8][8];
 	private int turn;
+	private Scanner sc;
 	
 	public Table() {
 		this.setupTable();
@@ -73,6 +75,7 @@ public class Table {
 	}
 	
 	public void setupTable() {
+		sc = new Scanner(System.in);
 		this.turn = -1;
 		for(int i=0; i<8; i++) {
 			this.table[i][1] = new Pawn("White");
@@ -106,7 +109,6 @@ public class Table {
 		}
 		
 		System.out.println("Random color assignment ? (y/n)");
-		Scanner sc = new Scanner(System.in);
 		char choice;
 		choice = sc.next().charAt(0);
 		if(Character.toLowerCase(choice) == 'y') {
@@ -118,7 +120,6 @@ public class Table {
 			System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
 			this.turn = index;
 			this.setupPlayers();
-			sc.close();
 			return true;
 		}
 		else if(Character.toLowerCase(choice) == 'n') {
@@ -129,9 +130,9 @@ public class Table {
 			while(true) {
 				try {
 					in = sc.nextInt();
+					sc.nextLine();
 					if(in != 1 && in != 2) {
 						System.err.println("Please choose player 1 or player 2");
-						sc.close();
 						return false;
 					}
 					in--;
@@ -142,19 +143,16 @@ public class Table {
 					System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
 					this.turn = in;
 					this.setupPlayers();
-					sc.close();
 					return true;
 				}
 				catch (InputMismatchException e) {
 					System.err.println("Please input a number");
-					sc.close();
 					return false;
 				}
 			}
 		}
 		else {
 			System.err.println("You need to input either \"Y\" or \"N\" !");
-			sc.close();
 			return false;
 		}
 	}
@@ -166,26 +164,32 @@ public class Table {
 	}
 	
 	public void startGame() {
-		this.displayInfo();
-		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-		while(!this.movePiece()) {};
+		sc.nextLine();
+		while(true) {
+			this.displayInfo();
+			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+			while(!this.movePiece());
+		}
 	}
 	
 	public boolean movePiece() {
-		Scanner sc = new Scanner(System.in);
 		String[] input = sc.nextLine().split(" ");
 		if(
-			input.length != 2 || input[0].length() != 2 || input[1].length() != 2 ||
-			Character.toLowerCase(input[0].charAt(0)) < 'a' || Character.toLowerCase(input[0].charAt(0)) > 'h' ||
-			input[1].charAt(0) < '1' || input[1].charAt(1) > '8'
+			input.length != 2 || input[0].length() != 2 || input[1].length() != 2
 		) {
-			System.out.println("Invalid format. Please use format A2 A4");
+			System.out.println("Invalid format ("+ Arrays.toString(input) +"). Please use format A2 A4");
 			return false;
 		}
-		else {
-			System.out.println("Valid");
+		
+		char[] in = {Character.toLowerCase(input[0].charAt(0)), input[0].charAt(1), Character.toLowerCase(input[1].charAt(0)), input[1].charAt(1)};
+		int[] oldPos = {(int) in[0]-(int) 'a', (int) in[1] - (int) '1'};
+		int[] newPos = {(int) in[2]-(int) 'a', (int) in[3] - (int) '1'};
+		if(oldPos[0] < 0 || oldPos[0] > 7 || oldPos[1] < 0 || oldPos[1] > 7 || newPos[0] < 0 || newPos[0] > 7 || newPos[1] < 0 || newPos[1] > 7) {
+			System.out.println("Invalid input. Please use A-H and 1-8");
+			return false;
 		}
-		return false;
+		
+		return true;
 	}
 	
 	public void displayInfo() {
