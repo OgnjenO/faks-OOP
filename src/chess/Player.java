@@ -30,13 +30,23 @@ public class Player {
 		for(int i=0; i<8; i++)
 			for(int j=0; j<8; j++)
 				canMove[i][j] = true;
+		if(this.color == "White") {
+			for(int i=0; i<8; i++) {
+				canMove[i][2] = false;
+			}
+		}
+		else {
+			for(int i=0; i<8; i++) {
+				canMove[i][5] = false;
+			}
+		}
 	}
 
 	@Override
 	public String toString() {
 		String output;
 		output = "Name : " + name + "\n";
-		output = "Color : " + color + "\n";
+		output += "Color : " + color;
 		return output;
 	}
 }

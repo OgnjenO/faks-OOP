@@ -97,10 +97,9 @@ public class Table {
 		this.table[4][7] = new King("Black");
 		
 		System.out.println("Table setup completed");
-		System.out.println("To start the game use command \"start\"");
 	}
 	
-	public boolean startGame() {
+	public boolean setupGame() {
 		if(this.players[0] == null || this.players[1] == null) {
 			System.out.println("You need 2 players to start the game");
 			return false;
@@ -117,6 +116,7 @@ public class Table {
 			System.out.println("BLACK : " + this.players[1-index].getName());
 			this.players[1-index].setColor("Black");
 			System.out.println("To move a piece specify the starting position and then the ending position (ex. A2 A4)");
+			this.setupPlayers();
 			this.turn = "White";
 			sc.close();
 			return true;
@@ -140,6 +140,7 @@ public class Table {
 					System.out.println("BLACK : " + this.players[1-in].getName());
 					this.players[1-in].setColor("Black");
 					System.out.println("To move a piece specify the starting position and then the ending position (ex. A2 A4)");
+					this.setupPlayers();
 					this.turn = "White";
 					sc.close();
 					return true;
@@ -159,8 +160,25 @@ public class Table {
 	}
 	
 	public void setupPlayers() {
-		if(this.turn == null) System.out.println("You can not setup players before the game starts");
 		this.players[0].setupPlayer();
 		this.players[1].setupPlayer();
 	}
+	
+	public void displayInfo() {
+		String output = "";
+		output += this.players[0].toString() + "\n";
+		output += this.players[1].toString() + "\n";
+		for(int j=0; j<8; j++) {
+			for(int i=0; i<8; i++) {
+				if(table[i][j] != null)
+					output += table[i][j].getMark() + " ";
+				else
+					output += "  ";
+			}
+			output += "\n";
+		}
+		System.out.println(output);
+	}
+	
+	
 }
