@@ -49,7 +49,7 @@ public class Table {
 		else if(this.players[1] == null) 
 			this.players[1] = player;
 		else {
-			System.out.println("There are already 2 players on this table");
+			System.err.println("There are already 2 players on this table");
 			return false;
 		}
 		return true;
@@ -57,12 +57,12 @@ public class Table {
 	
 	public boolean removePlayer(int index) throws Exception {
 		if(index != 0 && index != 1) {
-			System.out.println("Index must be 0 or 1 !");
+			System.err.println("Index must be 0 or 1");
 			return false;
 		}
 		
 		if(this.players[index] == null) {
-			System.out.println("There is no player at index : " + index);
+			System.err.println("There is no player at index : " + index);
 			return false;
 		}
 		
@@ -104,7 +104,7 @@ public class Table {
 	
 	public boolean setupGame() {
 		if(this.players[0] == null || this.players[1] == null) {
-			System.out.println("You need 2 players to start the game");
+			System.err.println("You need 2 players to start the game");
 			return false;
 		}
 		
@@ -178,7 +178,7 @@ public class Table {
 		if(
 			input.length != 2 || input[0].length() != 2 || input[1].length() != 2
 		) {
-			System.out.println("Invalid format ("+ Arrays.toString(input) +"). Please use format A2 A4");
+			System.err.println("Invalid format ("+ Arrays.toString(input) +"). Please use format A2 A4");
 			return false;
 		}
 		
@@ -186,28 +186,37 @@ public class Table {
 		int[] oldPos = {(int) in[1]-(int) '1', (int) in[0] - (int) 'a'};
 		int[] newPos = {(int) in[3]-(int) '1', (int) in[2] - (int) 'a'};
 		if(oldPos[0] < 0 || oldPos[0] > 7 || oldPos[1] < 0 || oldPos[1] > 7 || newPos[0] < 0 || newPos[0] > 7 || newPos[1] < 0 || newPos[1] > 7) {
-			System.out.println("Invalid input. Please use A-H and 1-8");
+			System.err.println("Invalid input. Please use A-H and 1-8");
 			return false;
 		}
 		
 		if(table[oldPos[0]][oldPos[1]] == null) {
-			System.out.println("Invalid input. Selected space is empty, nothing to move");
+			System.err.println("Invalid input. Selected space is empty, nothing to move");
 			return false;
 		}
 		
 		if(table[oldPos[0]][oldPos[1]].getColor() != this.players[this.turn].getColor()) {
-			System.out.println("Invalid input. You can only move your (" + this.players[this.turn].getColor() + ") pieces");
+			System.err.println("Invalid input. You can only move your (" + this.players[this.turn].getColor() + ") pieces");
 			return false;
 		}
 
 		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == this.players[this.turn].getColor()) {
-			System.out.println("Invalid input. You can not stack your pieces on top of each other");
+			System.err.println("Invalid input. You can not stack your pieces on top of each other");
 			return false;
 		}
 		
 		if(!table[oldPos[0]][oldPos[1]].movePiece(oldPos, newPos)) {
-			System.out.println("Invalid input. You can not move your pieces that way");
-			System.out.println(Arrays.toString(oldPos) + Arrays.toString(newPos));
+			System.err.println("Invalid input. You can not move your pieces that way");
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'P' && this.absDiff(oldPos[1], newPos[1]) == 1 && table[newPos[0]][newPos[1]] == null) {
+			System.err.println("Invalid input. Pawn move diagonaly only when taking enemy piece");
+			return false;
+		}
+		
+		if(!this.checkLine(oldPos, newPos)) {
+			System.err.println("Invalid input. Something is obstructing your way");
 			return false;
 		}
 		
@@ -223,6 +232,54 @@ public class Table {
 		table[oldPos[0]][oldPos[1]] = null;
 		
 		return true;
+	}
+	
+	public boolean checkLine(int[] oldPos, int[] newPos) {
+		Piece p = table[oldPos[0]][oldPos[1]];
+		if(p.getMark() == 'K' || p.getMark() == 'X' || p.getMark() == 'P') {
+			return true;
+		}
+		
+		if(p.getMark() == 'R') return this.checkStraightLine(oldPos, newPos);
+		if(p.getMark() == 'B') return this.checkDiagonalLine(oldPos, newPos);
+		if(p.getMark() == 'Q') return this.checkStraightLine(oldPos, newPos) && this.checkDiagonalLine(oldPos, newPos);
+		
+		return true;
+	}
+	
+	public boolean checkStraightLine(int[] oldPos, int[] newPos) {
+		int from, to;
+		if(oldPos[0] == newPos[0]) {
+			from = oldPos[1]<newPos[1] ? oldPos[1] : newPos[1];
+			to = oldPos[1]>newPos[1] ? oldPos[1] : newPos[1]; 
+			for(int i=from+1; i<to; i++) {
+				if(table[oldPos[0]][i] != null) return false;
+			}
+		}
+		else { 
+			from = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
+			to = oldPos[0]>newPos[0] ? oldPos[0] : newPos[0]; 
+			for(int j=from+1; j<to; j++) {
+				if(table[j][oldPos[1]] != null) return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	public boolean checkDiagonalLine(int[] oldPos, int[] newPos) {
+		int from[] = new int[2];
+		from[0] = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
+		from[1] = oldPos[1]<newPos[1] ? oldPos[1] : newPos[1];
+		for(int i=1; i<this.absDiff(oldPos[0], newPos[0]); i++) {
+			if(table[from[0]+i][from[1]+i] != null) return false;
+		}
+		
+		return true;
+	}
+
+	public int absDiff(int x, int y) {
+		return Math.abs(x-y);
 	}
 	
 	public void displayInfo() {
