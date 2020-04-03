@@ -34,10 +34,7 @@ public class Main {
 		t.makeAMove("B3 B2");
 		t.makeAMove("D1 F3");
 		t.makeAMove("B2 A1");
-		t.checkCheckMate();
 		t.makeAMove("F3 F7");
-		t.makeAMove("H7 H6");
-		t.checkCheckMate();
 	}
 
 }

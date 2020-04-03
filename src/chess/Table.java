@@ -119,10 +119,6 @@ public class Table {
 			System.out.println("The game configuration for game setup : ");
 			System.out.println("Moving pieces with conosle (Commands)");
 			System.out.println("Random colors");
-			System.out.println("Manual checkmate check (Command checkmate)");
-			System.out.println("Manual draw check (No legal moves) (Command draw-nlm)");
-			System.out.println("Manual draw check (Impossible checkmate) (Command draw-nocm)");
-			System.out.println("Asking for draw allowed (Command draw-ask)");
 			System.out.println("");
 			while(!this.movePieceWithMethods('n'));
 			while(!this.colorAssignment('y'));
@@ -138,13 +134,10 @@ public class Table {
 	
 	public boolean checkCheckMate() {
 		if(Check.checkCheckMate(this.players[this.turn], this)) {
-			System.err.println("Check mate");
 			return true;
 		}
-		else {
-			System.err.println("There are still valid options to move");
-			return false;
-		}
+		
+		return false;
 	}
 	
 	public boolean manualSetupGame() {
@@ -195,8 +188,8 @@ public class Table {
 					this.players[in].setKingPos(1, 4);
 					System.out.println("BLACK : " + this.players[1-in].getName());
 					this.players[1-in].setColor("Black");
-					this.players[1-in].setKingPos(7, 0);
-					this.players[1-in].setKingPos(7, 4);
+					this.players[1-in].setKingPos(0, 7);
+					this.players[1-in].setKingPos(1, 4);
 					this.turn = in;
 					this.setupPlayers();
 					return true;
@@ -239,24 +232,36 @@ public class Table {
 	public void initiateGame() {
 		System.out.println("\n\nTo move a piece specify the starting position and then the ending position (eg. A2 A4)");
 		this.displayInfo();
+		System.out.println("\n\n----------------------------------------------------\n----------------------------------------------------\n\n");
 		if(this.moveWithMethods) return;
-		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+//		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+		boolean isValidMove = false;
 		while(true) {
-			while(!this.movePiece(""));
+			isValidMove = this.movePiece("");
+			while(!isValidMove) {
+				if(this.checkCheckMate()) {
+					System.err.println("CHECKMATE");
+				}
+				isValidMove = this.movePiece("");
+			}
 			this.changeTurn();
 			this.displayInfo();
-			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+//			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
 		}
 	}
 	
 	public void makeAMove(String input) {
-		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-		System.out.println("Press any button to make the next move");
-		sc.nextLine();
+//		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+//		System.out.println("Press any button to make the next move");
+//		sc.nextLine();
 		System.out.println(input);
-		if(this.movePiece(input)) {
+		boolean isValidMove = this.movePiece(input);
+		if(isValidMove) {
 			this.changeTurn();
 			this.displayInfo();
+		}
+		if(this.checkCheckMate()) {
+			System.err.println("CHECKMATE");
 		}
 	}
 	
@@ -288,35 +293,7 @@ public class Table {
 			return false;
 		}
 		
-		if(table[oldPos[0]][oldPos[1]] == null) {
-			System.err.println("Invalid input. Selected space is empty, nothing to move");
-			return false;
-		}
-		
-		if(table[oldPos[0]][oldPos[1]].getColor() != this.players[this.turn].getColor()) {
-			System.err.println("Invalid input. You can only move your (" + this.players[this.turn].getColor() + ") pieces");
-			return false;
-		}
-
-		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == this.players[this.turn].getColor()) {
-			System.err.println("Invalid input. You can not stack your pieces on top of each other");
-			return false;
-		}
-		
-		if(!table[oldPos[0]][oldPos[1]].movePiece(oldPos, newPos)) {
-			System.err.println("Invalid input. You can not move your pieces that way");
-			return false;
-		}
-		
-		if(table[oldPos[0]][oldPos[1]].getMark() == 'P' && this.absDiff(oldPos[1], newPos[1]) == 1 && table[newPos[0]][newPos[1]] == null) {
-			System.err.println("Invalid input. Pawn move diagonaly only when taking enemy piece");
-			return false;
-		}
-		
-		if(!this.checkLine(oldPos, newPos)) {
-			System.err.println("Invalid input. Something is obstructing your way");
-			return false;
-		}
+		if(!this.canMove(oldPos, newPos)) return false;
 		
 		if(table[oldPos[0]][oldPos[1]].getMark() == 'X') {
 			if(Check.checkEnemyKingAround(this.players[this.turn], newPos, table)) {
@@ -395,6 +372,40 @@ public class Table {
 				System.out.println("Queen promotion");
 				table[newPos[0]][newPos[1]] = new Queen("Black");
 			}
+		}
+		
+		return true;
+	}
+	
+	public boolean canMove(int[] oldPos, int[] newPos) {
+		if(table[oldPos[0]][oldPos[1]] == null) {
+			System.err.println("Invalid input. Selected space is empty, nothing to move");
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getColor() != this.players[this.turn].getColor()) {
+			System.err.println("Invalid input. You can only move your (" + this.players[this.turn].getColor() + ") pieces");
+			return false;
+		}
+
+		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == this.players[this.turn].getColor()) {
+			System.err.println("Invalid input. You can not stack your pieces on top of each other");
+			return false;
+		}
+		
+		if(!table[oldPos[0]][oldPos[1]].movePiece(oldPos, newPos)) {
+			System.err.println("Invalid input. You can not move your pieces that way");
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'P' && this.absDiff(oldPos[1], newPos[1]) == 1 && table[newPos[0]][newPos[1]] == null) {
+			System.err.println("Invalid input. Pawn move diagonaly only when taking enemy piece");
+			return false;
+		}
+		
+		if(!this.checkLine(oldPos, newPos)) {
+			System.err.println("Invalid input. Something is obstructing your way");
+			return false;
 		}
 		
 		return true;
@@ -607,6 +618,8 @@ public class Table {
 		for(int j=0; j<8; j++) {
 			output += (char) (j+(int) 'A') + "     ";
 		}
+		
+		output += "\nTurn : " + this.players[this.turn].getColor();
 		
 		System.out.println(output);
 	}

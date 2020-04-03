@@ -1,8 +1,5 @@
 package chess;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-
 public class Check {
 	public static boolean checkCheck(Player p, int[] pos, Piece[][] table) {
 		return checkAttackerDiagonalLine(p, pos, table) || checkAttackerKnights(p, pos, table) || checkAttackerStraightLine(p, pos, table);
@@ -156,11 +153,10 @@ public class Check {
 	public static boolean checkCheckMate(Player p, Table t) {
 		Piece[][] table = t.getTable();
 		Piece oldP, newP;
-		boolean validMove = false;
+		boolean isCheck = false;
 		int[] oldPos = new int[2], newPos = new int[2];
 		for(int i=0; i<8; i++) {
 			for(int j=0; j<8; j++) {
-				if(table[i][j] == null || table[i][j].getColor() != p.getColor()) continue;
 				oldPos[0] = i;
 				oldPos[1] = j;
 				for(int ii=0; ii<8; ii++) {
@@ -178,7 +174,7 @@ public class Check {
 								p.setKingPos(newPos);
 							}
 							
-							validMove = Check.checkCheck(p,  p.getKingPos(), table);
+							isCheck = Check.checkCheck(p,  p.getKingPos(), table);
 							
 							if(table[newPos[0]][newPos[1]].getMark() == 'X') {
 								p.setKingPos(oldPos);
@@ -186,7 +182,10 @@ public class Check {
 							table[oldPos[0]][oldPos[1]] = oldP;
 							table[newPos[0]][newPos[1]] = newP;
 							
-							if(!validMove) return false;
+							if(!isCheck) {
+//								System.err.println(Arrays.toString(oldPos) + Arrays.toString(newPos));
+								return false;
+							}
 						}
 					}
 				}
@@ -197,13 +196,13 @@ public class Check {
 	
 	public static boolean canMove(Player p, int[] oldPos, int[] newPos, Table t, Piece[][] table) {
 
-		PrintStream originalStream = System.out;
-
-		PrintStream dummyStream = new PrintStream(new OutputStream(){
-		    public void write(int b) {
-		        // NO-OP
-		    }
-		});
+		if(table[oldPos[0]][oldPos[1]] == null) {
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getColor() != p.getColor()) {
+			return false;
+		}
 
 		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == p.getColor()) {
 			return false;
@@ -217,7 +216,7 @@ public class Check {
 			return false;
 		}
 		
-		if(t.checkLine(oldPos, newPos)) {
+		if(!t.checkLine(oldPos, newPos)) {
 			return false;
 		}
 		
@@ -229,10 +228,26 @@ public class Check {
 			if(((King) table[oldPos[0]][oldPos[1]]).isCastling(oldPos, newPos)) {
 				if(((King) table[oldPos[0]][oldPos[1]]).isBigCastling(oldPos, newPos)) {
 					if(p.getBigCastle()) {
-						System.setOut(dummyStream);
-						boolean resultFromCastling = t.canDoBigCastling(oldPos);
-						System.setOut(originalStream);
-						return resultFromCastling;
+						int[] tp = oldPos;
+						if(Check.checkCheck(p, tp, table)) {
+							return false;
+						}
+						Piece tempPiece = table[tp[0]][tp[1]];
+						table[tp[0]][tp[1]] = null;
+						
+						tp[1]--;
+						if(Check.checkCheck(p, tp, table)) {
+							table[oldPos[0]][oldPos[1]] = tempPiece;
+							return false;
+						}
+						
+						tp[1]--;
+						if(Check.checkCheck(p, tp, table)) {
+							table[oldPos[0]][oldPos[1]] = tempPiece;
+							return false;
+						}
+						
+						return true;
 					}
 					else {
 						return false;
@@ -240,12 +255,29 @@ public class Check {
 				}
 				else if(((King) table[oldPos[0]][oldPos[1]]).isSmallCastling(oldPos, newPos)) {
 					if(p.getSmallCastle()) {
-						System.setOut(dummyStream);
-						boolean resultFromCastling = t.canDoSmallCastling(oldPos);
-						System.setOut(originalStream);
-						return resultFromCastling;
+						int[] tp = oldPos;
+						if(Check.checkCheck(p, tp, table)) {
+							return false;
+						}
+						Piece tempPiece = table[tp[0]][tp[1]];
+						table[tp[0]][tp[1]] = null;
+						
+						tp[1]++;
+						if(Check.checkCheck(p, tp, table)) {
+							table[oldPos[0]][oldPos[1]] = tempPiece;
+							return false;
+						}
+						
+						tp[1]++;
+						if(Check.checkCheck(p, tp, table)) {
+							table[oldPos[0]][oldPos[1]] = tempPiece;
+							return false;
+						}
+						
+						return true;
 					}
 					else {
+						return false;
 					}
 				}
 			}
