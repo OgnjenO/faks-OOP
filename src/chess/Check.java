@@ -1,5 +1,8 @@
 package chess;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+
 public class Check {
 	public static boolean checkCheck(Player p, int[] pos, Piece[][] table) {
 		return checkAttackerDiagonalLine(p, pos, table) || checkAttackerKnights(p, pos, table) || checkAttackerStraightLine(p, pos, table);
@@ -148,5 +151,110 @@ public class Check {
 		int i=pos[0];
 		int j=pos[1];
 		return isInBounds(i, j);
+	}
+	
+	public static boolean checkCheckMate(Player p, Table t) {
+		Piece[][] table = t.getTable();
+		Piece oldP, newP;
+		boolean validMove = false;
+		int[] oldPos = new int[2], newPos = new int[2];
+		for(int i=0; i<8; i++) {
+			for(int j=0; j<8; j++) {
+				if(table[i][j] == null || table[i][j].getColor() != p.getColor()) continue;
+				oldPos[0] = i;
+				oldPos[1] = j;
+				for(int ii=0; ii<8; ii++) {
+					for(int jj=0; jj<8; jj++) {
+						newPos[0] = ii;
+						newPos[1] = jj;
+						if(canMove(p, oldPos, newPos, t, table)) {
+							oldP = table[oldPos[0]][oldPos[1]];
+							newP = table[newPos[0]][newPos[1]];
+							
+							table[newPos[0]][newPos[1]] = table[oldPos[0]][oldPos[1]];
+							table[oldPos[0]][oldPos[1]] = null;
+							
+							if(table[newPos[0]][newPos[1]].getMark() == 'X') {
+								p.setKingPos(newPos);
+							}
+							
+							validMove = Check.checkCheck(p,  p.getKingPos(), table);
+							
+							if(table[newPos[0]][newPos[1]].getMark() == 'X') {
+								p.setKingPos(oldPos);
+							}
+							table[oldPos[0]][oldPos[1]] = oldP;
+							table[newPos[0]][newPos[1]] = newP;
+							
+							if(!validMove) return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
+	
+	public static boolean canMove(Player p, int[] oldPos, int[] newPos, Table t, Piece[][] table) {
+
+		PrintStream originalStream = System.out;
+
+		PrintStream dummyStream = new PrintStream(new OutputStream(){
+		    public void write(int b) {
+		        // NO-OP
+		    }
+		});
+
+		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getColor() == p.getColor()) {
+			return false;
+		}
+		
+		if(!table[oldPos[0]][oldPos[1]].movePiece(oldPos, newPos)) {
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'P' && absDiff(oldPos[1], newPos[1]) == 1 && table[newPos[0]][newPos[1]] == null) {
+			return false;
+		}
+		
+		if(t.checkLine(oldPos, newPos)) {
+			return false;
+		}
+		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'X') {
+			if(Check.checkEnemyKingAround(p, newPos, table)) {
+				return false;
+			}
+			
+			if(((King) table[oldPos[0]][oldPos[1]]).isCastling(oldPos, newPos)) {
+				if(((King) table[oldPos[0]][oldPos[1]]).isBigCastling(oldPos, newPos)) {
+					if(p.getBigCastle()) {
+						System.setOut(dummyStream);
+						boolean resultFromCastling = t.canDoBigCastling(oldPos);
+						System.setOut(originalStream);
+						return resultFromCastling;
+					}
+					else {
+						return false;
+					}
+				}
+				else if(((King) table[oldPos[0]][oldPos[1]]).isSmallCastling(oldPos, newPos)) {
+					if(p.getSmallCastle()) {
+						System.setOut(dummyStream);
+						boolean resultFromCastling = t.canDoSmallCastling(oldPos);
+						System.setOut(originalStream);
+						return resultFromCastling;
+					}
+					else {
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	public static int absDiff(int x, int y) {
+		return Math.abs(x-y);
 	}
 }

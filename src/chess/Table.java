@@ -136,6 +136,17 @@ public class Table {
 		return true;
 	}
 	
+	public boolean checkCheckMate() {
+		if(Check.checkCheckMate(this.players[this.turn], this)) {
+			System.err.println("Check mate");
+			return true;
+		}
+		else {
+			System.err.println("There are still valid options to move");
+			return false;
+		}
+	}
+	
 	public boolean manualSetupGame() {
 		System.out.println("Random color assignment ? (y/n)");
 		char choice;
@@ -243,8 +254,10 @@ public class Table {
 		System.out.println("Press any button to make the next move");
 		sc.nextLine();
 		System.out.println(input);
-		if(this.movePiece(input)) this.changeTurn();
-		this.displayInfo();
+		if(this.movePiece(input)) {
+			this.changeTurn();
+			this.displayInfo();
+		}
 	}
 	
 	public String[] getMoveFromScanner() {
@@ -359,7 +372,7 @@ public class Table {
 		
 		System.out.print(oldP.getName() + " (" + oldP.getColor() + ") " + input[0] + " -> " + input[1]);
 		if(newP != null && newP.getName() != "Shadow") {
-			System.out.print("   |   Took " + newP.getName());
+			System.out.println("   |   Took " + newP.getName());
 		}
 		// for(int i=0; i<40; i++) System.out.println();
 		
@@ -373,10 +386,21 @@ public class Table {
 			this.players[this.turn].setSmallCastle(false);
 		}
 		
+		if(table[newPos[0]][newPos[1]].getMark() == 'P') {
+			if(this.players[this.turn].getColor() == "White" && newPos[0] == 7) {
+				System.out.println("Queen promotion");
+				table[newPos[0]][newPos[1]] = new Queen("White");
+			}
+			else if(this.players[this.turn].getColor() == "Black" && newPos[0] == 0) {
+				System.out.println("Queen promotion");
+				table[newPos[0]][newPos[1]] = new Queen("Black");
+			}
+		}
+		
 		return true;
 	}
 	
-	public boolean doBigCastling(int[] pos) {
+	public boolean canDoBigCastling(int[] pos) {
 		int[] tp = pos;
 		Player p = this.players[this.turn];
 		if(Check.checkCheck(p, tp, table)) {
@@ -400,6 +424,16 @@ public class Table {
 			return false;
 		}
 		
+		return true;
+	}
+	
+	public boolean doBigCastling(int[] pos) {
+		int[] tp = pos;
+
+		Piece tempPiece = table[tp[0]][tp[1]];
+		table[tp[0]][tp[1]] = null;
+		
+		if(!this.canDoBigCastling(pos)) return false;
 		table[tp[0]][tp[1]] = tempPiece;
 		table[tp[0]][tp[1]+1] = table[tp[0]][0];
 		table[tp[0]][0] = null;
@@ -411,11 +445,11 @@ public class Table {
 		return true;
 	}
 	
-	public boolean doSmallCastling(int[] pos) {
+	public boolean canDoSmallCastling(int[] pos) {
 		int[] tp = pos;
 		Player p = this.players[this.turn];
 		if(Check.checkCheck(p, tp, table)) {
-			System.err.println("Invalid input. You can not do small castling while under check");
+			System.err.println("Invalid input. You can not do big castling while under check");
 			return false;
 		}
 		Piece tempPiece = table[tp[0]][tp[1]];
@@ -423,18 +457,28 @@ public class Table {
 		
 		tp[1]++;
 		if(Check.checkCheck(p, tp, table)) {
-			System.err.println("Invalid input. You can not do small castling while squar F" + (tp[0]+1) + " is under attack");
+			System.err.println("Invalid input. You can not do big castling while squar F" + (tp[0]+1) + " is under attack");
 			table[pos[0]][pos[1]] = tempPiece;
 			return false;
 		}
 		
 		tp[1]++;
 		if(Check.checkCheck(p, tp, table)) {
-			System.err.println("Invalid input. You can not do small castling while squar G" + (tp[0]+1) + " is under attack");
+			System.err.println("Invalid input. You can not do big castling while squar G" + (tp[0]+1) + " is under attack");
 			table[pos[0]][pos[1]] = tempPiece;
 			return false;
 		}
 		
+		return true;
+	}
+	
+	public boolean doSmallCastling(int[] pos) {
+		int[] tp = pos;
+
+		Piece tempPiece = table[tp[0]][tp[1]];
+		table[tp[0]][tp[1]] = null;
+		
+		if(!this.canDoSmallCastling(pos)) return false;
 		table[tp[0]][tp[1]] = tempPiece;
 		table[tp[0]][tp[1]-1] = table[tp[0]][7];
 		table[tp[0]][7] = null;
@@ -486,9 +530,6 @@ public class Table {
 		
 		if(p.getMark() == 'R') return this.checkStraightLine(oldPos, newPos);
 		if(p.getMark() == 'B') return this.checkDiagonalLine(oldPos, newPos);
-		System.out.println("Checking for : " + Arrays.toString(oldPos) + Arrays.toString(newPos));
-		System.out.println(this.checkStraightLine(oldPos, newPos));
-		System.out.println(this.checkDiagonalLine(oldPos, newPos));
 		if(p.getMark() == 'Q') return this.checkStraightLine(oldPos, newPos) || this.checkDiagonalLine(oldPos, newPos);
 		
 		return true;
@@ -524,7 +565,6 @@ public class Table {
 			int iinc = oldPos[0] < newPos[0] ? 1 : -1;
 			int jinc = oldPos[1] < newPos[1] ? 1 : -1;
 			for(int i=1; i<this.absDiff(oldPos[0], newPos[0]); i++) {
-				System.out.println("Checking : " + (from[0]+i*iinc) + " " + (from[1]+i*jinc));
 				if(table[from[0]+i*iinc][from[1]+i*jinc] != null) {
 					return false;	
 				}
@@ -537,6 +577,10 @@ public class Table {
 
 	public int absDiff(int x, int y) {
 		return Math.abs(x-y);
+	}
+	
+	public Piece[][] getTable() {
+		return this.table;
 	}
 	
 	public void displayInfo() {

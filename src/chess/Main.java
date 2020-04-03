@@ -30,6 +30,14 @@ public class Main {
 		t.makeAMove("A5 A4");
 		t.makeAMove("B2 B4");
 		t.makeAMove("A4 B3");
+		t.makeAMove("C1 E3");
+		t.makeAMove("B3 B2");
+		t.makeAMove("D1 F3");
+		t.makeAMove("B2 A1");
+		t.checkCheckMate();
+		t.makeAMove("F3 F7");
+		t.makeAMove("H7 H6");
+		t.checkCheckMate();
 	}
 
 }
