@@ -5,6 +5,8 @@ public class Player {
 	private String color;
 	private boolean[][] canMove = new boolean[8][8];
 	private int[] kingPos = new int[2];
+	private boolean canBigCastle;
+	private boolean canSmallCastle;
 	
 	public Player(String name) {
 		super();
@@ -45,6 +47,22 @@ public class Player {
 		return this.kingPos[index];
 	}
 	
+	public boolean getBigCastle() {
+		return canBigCastle;
+	}
+
+	public void setBigCastle(boolean canBigCastle) {
+		this.canBigCastle = canBigCastle;
+	}
+
+	public boolean getSmallCastle() {
+		return canSmallCastle;
+	}
+
+	public void setSmallCastle(boolean canSmallCastle) {
+		this.canSmallCastle = canSmallCastle;
+	}
+
 	public void setupPlayer() {
 		for(int i=0; i<8; i++)
 			for(int j=0; j<8; j++)
@@ -59,6 +77,8 @@ public class Player {
 				canMove[i][5] = false;
 			}
 		}
+		this.canBigCastle = true;
+		this.canSmallCastle = true;
 	}
 
 	@Override

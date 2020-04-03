@@ -51,8 +51,8 @@ public class Check {
 		int x = pos[1];
 		int y = pos[0]+yinc;
 		
-		if(isInBounds(x+1, y) && table[x+1][y] != null && table[x+1][y].getMark() == 'P' && table[x+1][y].getColor() != p.getColor()) return true;
-		if(isInBounds(x-1, y) && table[x-1][y] != null && table[x-1][y].getMark() == 'P' && table[x-1][y].getColor() != p.getColor()) return true;
+		if(isInBounds(x+1, y) && table[y][x+1] != null && table[y][x+1].getMark() == 'P' && table[y][x+1].getColor() != p.getColor()) return true;
+		if(isInBounds(x-1, y) && table[y][x-1] != null && table[y][x-1].getMark() == 'P' && table[y][x-1].getColor() != p.getColor()) return true;
 		
 		for(int i=pos[0]+1, j=pos[1]+1; i<8 && j<8; i++, j++) {
 			if(table[i][j] != null)

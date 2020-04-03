@@ -22,6 +22,14 @@ public class Main {
 		t.makeAMove("C8 D7");
 		t.makeAMove("B5 C4");
 		t.makeAMove("B8 C6");
+		t.makeAMove("E1 G1");
+		t.makeAMove("A7 A5");
+		t.makeAMove("D2 D4");
+		t.makeAMove("C5 D4");
+		t.makeAMove("F3 D4");
+		t.makeAMove("A5 A4");
+		t.makeAMove("B2 B4");
+		t.makeAMove("A4 B3");
 	}
 
 }

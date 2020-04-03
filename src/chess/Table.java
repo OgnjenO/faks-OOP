@@ -10,7 +10,6 @@ public class Table {
 	private int turn;
 	private Scanner sc;
 	private Piece shadow = new Shadow();
-	private boolean autoCheck = false;
 	private boolean moveWithMethods = false;
 	
 	public Table() {
@@ -80,6 +79,7 @@ public class Table {
 	public void setupTable() {
 		sc = new Scanner(System.in);
 		this.turn = -1;
+		this.moveWithMethods = false;
 		for(int i=0; i<8; i++) {
 			this.table[1][i] = new Pawn("White");
 			this.table[6][i] = new Pawn("Black");
@@ -305,9 +305,31 @@ public class Table {
 			return false;
 		}
 		
-		if(table[oldPos[0]][oldPos[1]].getMark() == 'X' && Check.checkEnemyKingAround(this.players[this.turn], newPos, table)) {
-			System.err.println("Invalid input. Enemy kings can not stand next to each other");
-			return false;
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'X') {
+			if(Check.checkEnemyKingAround(this.players[this.turn], newPos, table)) {
+				System.err.println("Invalid input. Enemy kings can not stand next to each other");
+				return false;
+			}
+			
+			if(((King) table[oldPos[0]][oldPos[1]]).isCastling(oldPos, newPos)) {
+				if(((King) table[oldPos[0]][oldPos[1]]).isBigCastling(oldPos, newPos)) {
+					if(this.players[this.turn].getBigCastle()) {
+						return this.doBigCastling(oldPos);
+					}
+					else {
+						System.err.println("Invalid input. You are not allowed to do big castling");
+						return false;
+					}
+				}
+				else if(((King) table[oldPos[0]][oldPos[1]]).isSmallCastling(oldPos, newPos)) {
+					if(this.players[this.turn].getSmallCastle()) {
+						return this.doSmallCastling(oldPos);
+					}
+					else {
+						System.err.println("Invalid input. You are not allowed to do small castling");
+					}
+				}
+			}
 		}
 		
 		if(table[oldPos[0]][oldPos[1]].getMark() == 'P') {
@@ -343,9 +365,86 @@ public class Table {
 		
 		this.checkShadow();
 		
+		if(((oldPos[0] == 0 || oldPos[0] == 7) && (oldPos[1] == 0 || oldPos[1] == 4))) {
+			this.players[this.turn].setBigCastle(false);
+		}
+		
+		if(((oldPos[0] == 0 || oldPos[0] == 7) && (oldPos[1] == 7 || oldPos[1] == 4))) {
+			this.players[this.turn].setSmallCastle(false);
+		}
+		
 		return true;
 	}
-
+	
+	public boolean doBigCastling(int[] pos) {
+		int[] tp = pos;
+		Player p = this.players[this.turn];
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do big castling while under check");
+			return false;
+		}
+		Piece tempPiece = table[tp[0]][tp[1]];
+		table[tp[0]][tp[1]] = null;
+		
+		tp[1]--;
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do big castling while squar D" + (tp[0]+1) + " is under attack");
+			table[pos[0]][pos[1]] = tempPiece;
+			return false;
+		}
+		
+		tp[1]--;
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do big castling while squar C" + (tp[0]+1) + " is under attack");
+			table[pos[0]][pos[1]] = tempPiece;
+			return false;
+		}
+		
+		table[tp[0]][tp[1]] = tempPiece;
+		table[tp[0]][tp[1]+1] = table[tp[0]][0];
+		table[tp[0]][0] = null;
+		
+		System.out.println("King  (" + tempPiece.getColor() + ") -> Big castling");
+		
+		this.checkShadow();
+		
+		return true;
+	}
+	
+	public boolean doSmallCastling(int[] pos) {
+		int[] tp = pos;
+		Player p = this.players[this.turn];
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do small castling while under check");
+			return false;
+		}
+		Piece tempPiece = table[tp[0]][tp[1]];
+		table[tp[0]][tp[1]] = null;
+		
+		tp[1]++;
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do small castling while squar F" + (tp[0]+1) + " is under attack");
+			table[pos[0]][pos[1]] = tempPiece;
+			return false;
+		}
+		
+		tp[1]++;
+		if(Check.checkCheck(p, tp, table)) {
+			System.err.println("Invalid input. You can not do small castling while squar G" + (tp[0]+1) + " is under attack");
+			table[pos[0]][pos[1]] = tempPiece;
+			return false;
+		}
+		
+		table[tp[0]][tp[1]] = tempPiece;
+		table[tp[0]][tp[1]-1] = table[tp[0]][7];
+		table[tp[0]][7] = null;
+		
+		System.out.println("King  (" + tempPiece.getColor() + ") -> Small castling");
+		
+		this.checkShadow();
+		
+		return true;
+	}
 	
 	public void checkShadow() {
 		Shadow s = (Shadow) this.shadow;
@@ -366,7 +465,7 @@ public class Table {
 			
 		if(moveWay == 2 || moveWay == -2) {
 			Shadow s = (Shadow) this.shadow;
-			table[s.getPos(0)][s.getPos(1)] = null;
+			if(table[s.getPos(0)][s.getPos(1)] != null && table[s.getPos(0)][s.getPos(1)].getName() == "Shadow") table[s.getPos(0)][s.getPos(1)] = null;
 			table[newPos[0]+moveWay/2][newPos[1]] = this.shadow;
 			s.resetTimer();
 			s.setPos(0, newPos[0]+moveWay/2);
