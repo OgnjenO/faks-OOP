@@ -10,6 +10,7 @@ public class Table {
 	private int turn;
 	private Scanner sc;
 	private Piece shadow = new Shadow();
+	private boolean autoCheck = false;
 	
 	public Table() {
 		this.setupTable();
@@ -257,26 +258,41 @@ public class Table {
 			return false;
 		}
 		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'X' && this.checkEnemyKingAround(this.players[this.turn], newPos)) {
+			System.err.println("Invalid input. Enemy kings can not stand next to each other");
+			return false;
+		}
+		
 		if(table[oldPos[0]][oldPos[1]].getMark() == 'P') {
 			this.checkPawn(oldPos, newPos);
 		}
 		
-	
-		if(table[oldPos[0]][oldPos[0]].getMark() == 'X') {
+		Piece oldP = table[oldPos[0]][oldPos[1]];
+		Piece newP = table[newPos[0]][newPos[1]];
+		
+		table[newPos[0]][newPos[1]] = table[oldPos[0]][oldPos[1]];
+		table[oldPos[0]][oldPos[1]] = null;
+		
+		if(table[newPos[0]][newPos[1]].getMark() == 'X') {
 			this.players[this.turn].setKingPos(newPos);
 		}
 		
+		if(this.checkCheck(this.players[this.turn], this.players[this.turn].getKingPos())) {
+			System.err.println("Invalid input. You can not move a piece in a way that makes you end up in check");
+			if(table[newPos[0]][newPos[1]].getMark() == 'X') {
+				this.players[this.turn].setKingPos(oldPos);
+			}
+			table[oldPos[0]][oldPos[1]] = oldP;
+			table[newPos[0]][newPos[1]] = newP;
+			
+			return false;
+		}
 		
-		Piece p = table[oldPos[0]][oldPos[1]];
-		
-		System.out.print(p.getName() + " (" + p.getColor() + ") " + input[0] + " -> " + input[1]);
-		p = table[newPos[0]][newPos[1]];
-		if(p != null && p.getName() != "Shadow") {
-			System.out.print("   |   Took " + p.getName());
+		System.out.print(oldP.getName() + " (" + oldP.getColor() + ") " + input[0] + " -> " + input[1]);
+		if(newP != null && newP.getName() != "Shadow") {
+			System.out.print("   |   Took " + newP.getName());
 		}
 		System.out.println();
-		table[newPos[0]][newPos[1]] = table[oldPos[0]][oldPos[1]];
-		table[oldPos[0]][oldPos[1]] = null;
 		
 		this.checkShadow();
 		
@@ -293,49 +309,48 @@ public class Table {
 		j = pos[1];
 		
 		i += 2; j += 1;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i -= 2; j -= 1;
 		
 		i += 2; j -= 1;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i -= 2; j += 1;
 		
 		i -= 2; j += 1;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i += 2; j -= 1;
 		
 		i -= 2; j -= 1;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i += 2; j += 1;
 		
 		i += 1; j += 2;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i -= 1; j -= 2;
 		
 		i += 1; j -= 2;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i -= 1; j += 2;
 		
 		i -= 1; j += 2;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i += 1; j -= 2;
 		
 		i -= 1; j -= 2;
-		if(table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
+		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
 		i += 1; j += 2;
 		
 		return false;
 	}
 	
 	public boolean checkAttackerDiagonalLine(Player p, int[] pos) {
-		if(p.getColor() == "White") {
-			if(table[pos[0]+1][pos[1]+1].getMark() == 'P' && table[pos[0]+1][pos[1]+1].getColor() == "Black") return false;
-			else if(table[pos[0]+1][pos[1]-1].getMark() == 'P' && table[pos[0]+1][pos[1]-1].getColor() == "Black") return false;
-		}
-		else {
-			if(table[pos[0]-1][pos[1]-1].getMark() == 'P' && table[pos[0]-1][pos[1]+1].getColor() == "White") return false;
-			else if(table[pos[0]-1][pos[1]-1].getMark() == 'P' && table[pos[0]-1][pos[1]-1].getColor() == "Black") return false;
-		}
+		int yinc = p.getColor() == "White" ? 1 : -1;
+		
+		int x = pos[1];
+		int y = pos[0]+yinc;
+		
+		if(this.isInBounds(x+1, y) && table[x+1][y] != null && table[x+1][y].getMark() == 'P' && table[x+1][y].getColor() != p.getColor()) return true;
+		if(this.isInBounds(x-1, y) && table[x-1][y] != null && table[x-1][y].getMark() == 'P' && table[x-1][y].getColor() != p.getColor()) return true;
 		
 		for(int i=pos[0]+1, j=pos[1]+1; i<8 && j<8; i++, j++) {
 			if(table[i][j] != null)
@@ -400,6 +415,39 @@ public class Table {
 		return false;
 	}
 	
+	public boolean checkEnemyKingAround(Player p, int[] pos) {
+		int i, j;
+		i = pos[0];
+		j = pos[1];
+		
+		i += 1;
+		for(int t = -1; t<2; t++)
+			if(this.isInBounds(i, j) && table[i][j+t] != null && table[i][j+t].getColor() != p.getColor() && table[i][j+t].getMark() == 'X') return true;
+		i -= 2;
+		for(int t = -1; t<2; t++)
+			if(this.isInBounds(i, j) && table[i][j+t] != null && table[i][j+t].getColor() != p.getColor() && table[i][j+t].getMark() == 'X') return true;
+		
+		i += 1;
+		
+		j += 1;
+		if(this.isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'X') return true;
+		j -= 2;
+		if(this.isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'X') return true;
+		
+		return false;
+	}
+	
+	public boolean isInBounds(int i, int j) {
+		if(i>7 || i<0 || j>7 || i<0) return false;
+		return true;
+	}
+	
+	public boolean isInBounds(int[] pos) {
+		int i=pos[0];
+		int j=pos[1];
+		return isInBounds(i, j);
+	}
+	
 	public void checkShadow() {
 		Shadow s = (Shadow) this.shadow;
 		if(s.getTimer() == -1) return;
@@ -440,6 +488,7 @@ public class Table {
 		
 		if(p.getMark() == 'R') return this.checkStraightLine(oldPos, newPos);
 		if(p.getMark() == 'B') return this.checkDiagonalLine(oldPos, newPos);
+		System.out.println("Checking for : " + Arrays.toString(oldPos) + Arrays.toString(newPos));
 		System.out.println(this.checkStraightLine(oldPos, newPos));
 		System.out.println(this.checkDiagonalLine(oldPos, newPos));
 		if(p.getMark() == 'Q') return this.checkStraightLine(oldPos, newPos) || this.checkDiagonalLine(oldPos, newPos);
@@ -472,10 +521,15 @@ public class Table {
 	public boolean checkDiagonalLine(int[] oldPos, int[] newPos) {
 		int from[] = new int[2];
 		if(this.absDiff(oldPos[0], newPos[0]) == this.absDiff(oldPos[1], newPos[1])) {
-			from[0] = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
-			from[1] = oldPos[1]<newPos[1] ? oldPos[1] : newPos[1];
+			from[0] = oldPos[0];
+			from[1] = oldPos[1];
+			int iinc = oldPos[0] < newPos[0] ? 1 : -1;
+			int jinc = oldPos[1] < newPos[1] ? 1 : -1;
 			for(int i=1; i<this.absDiff(oldPos[0], newPos[0]); i++) {
-				if(table[from[0]+i][from[1]+i] != null) return false;
+				System.out.println("Checking : " + (from[0]+i*iinc) + " " + (from[1]+i*jinc));
+				if(table[from[0]+i*iinc][from[1]+i*jinc] != null) {
+					return false;	
+				}
 			}
 			return true;
 		}
