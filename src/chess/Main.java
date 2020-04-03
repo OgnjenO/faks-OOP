@@ -9,7 +9,6 @@ public class Main {
 		t.addPlayer(p);
 		p = new Player("Mika Mikic");
 		t.addPlayer(p);
-		t.setupGame();
 		t.startGame();
 	}
 

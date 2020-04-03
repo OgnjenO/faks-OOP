@@ -4,10 +4,13 @@ public class Player {
 	private String name;
 	private String color;
 	private boolean[][] canMove = new boolean[8][8];
+	private int[] kingPos = new int[2];
 	
 	public Player(String name) {
 		super();
 		this.name = name;
+		this.kingPos[0] = 0;
+		this.kingPos[1] = 1;
 	}
 	
 	public String getName() {
@@ -24,6 +27,22 @@ public class Player {
 
 	public void setColor(String color) {
 		this.color = color;
+	}
+	
+	public void setKingPos(int[] kingPos) {
+		this.kingPos = kingPos;
+	}
+	
+	public void setKingPos(int index, int value) {
+		this.kingPos[index] = value;
+	}
+	
+	public int[] getKingPos() {
+		return this.kingPos;
+	}
+	
+	public int getKingPos(int index) {
+		return this.kingPos[index];
 	}
 	
 	public void setupPlayer() {
