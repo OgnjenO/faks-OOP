@@ -34,6 +34,10 @@ public abstract class Piece {
 	public String getColor() {
 		return color;
 	}
+	
+	public char getColorMark() {
+		return Character.toLowerCase(this.color.charAt(0));
+	}
 
 	public void setColor(String color) {
 		this.color = color;

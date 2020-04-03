@@ -9,6 +9,7 @@ public class Table {
 	private Piece[][] table = new Piece[8][8];
 	private int turn;
 	private Scanner sc;
+	private Piece shadow = new Shadow();
 	
 	public Table() {
 		this.setupTable();
@@ -169,7 +170,7 @@ public class Table {
 			this.displayInfo();
 			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
 			while(!this.movePiece());
-			this.turn = 1 - this.turn;
+			this.changeTurn();
 		}
 	}
 	
@@ -220,18 +221,56 @@ public class Table {
 			return false;
 		}
 		
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'P') {
+			this.checkPawn(oldPos, newPos);
+		}
+		
 		Piece p = table[oldPos[0]][oldPos[1]];
 		
 		System.out.print(p.getName() + " (" + p.getColor() + ") " + input[0] + " -> " + input[1]);
 		p = table[newPos[0]][newPos[1]];
-		if(p != null) {
+		if(p != null && p.getName() != "Shadow") {
 			System.out.print("   |   Took " + p.getName());
 		}
 		System.out.println();
 		table[newPos[0]][newPos[1]] = table[oldPos[0]][oldPos[1]];
 		table[oldPos[0]][oldPos[1]] = null;
 		
+		this.checkShadow();
+		
 		return true;
+	}
+	
+	public void checkShadow() {
+		Shadow s = (Shadow) this.shadow;
+		if(s.getTimer() == -1) return;
+		s.incTimer();
+		if(s.getTimer() > 1) {
+			s.setTimer(-1);
+			if(table[s.getPos(0)][s.getPos(1)] != null && table[s.getPos(0)][s.getPos(1)].getName() == "Shadow") table[s.getPos(0)][s.getPos(1)] = null;
+		}
+	}
+	
+	public void checkPawn(int[] oldPos, int[] newPos) {
+		int moveWay = oldPos[0]-newPos[0];
+		if(table[newPos[0]][newPos[1]] != null && table[newPos[0]][newPos[1]].getName() == "Shadow") {
+			table[newPos[0]][newPos[1]] = table[newPos[0]+moveWay][newPos[1]];
+			table[newPos[0]+moveWay][newPos[1]] = null;
+		}
+			
+		if(moveWay == 2 || moveWay == -2) {
+			Shadow s = (Shadow) this.shadow;
+			table[s.getPos(0)][s.getPos(1)] = null;
+			table[newPos[0]+moveWay/2][newPos[1]] = this.shadow;
+			s.resetTimer();
+			s.setPos(0, newPos[0]+moveWay/2);
+			s.setPos(1, newPos[1]);
+			
+		}
+	}
+	
+	public void changeTurn() {
+		this.turn = 1 - this.turn;
 	}
 	
 	public boolean checkLine(int[] oldPos, int[] newPos) {
@@ -242,7 +281,9 @@ public class Table {
 		
 		if(p.getMark() == 'R') return this.checkStraightLine(oldPos, newPos);
 		if(p.getMark() == 'B') return this.checkDiagonalLine(oldPos, newPos);
-		if(p.getMark() == 'Q') return this.checkStraightLine(oldPos, newPos) && this.checkDiagonalLine(oldPos, newPos);
+		System.out.println(this.checkStraightLine(oldPos, newPos));
+		System.out.println(this.checkDiagonalLine(oldPos, newPos));
+		if(p.getMark() == 'Q') return this.checkStraightLine(oldPos, newPos) || this.checkDiagonalLine(oldPos, newPos);
 		
 		return true;
 	}
@@ -255,27 +296,32 @@ public class Table {
 			for(int i=from+1; i<to; i++) {
 				if(table[oldPos[0]][i] != null) return false;
 			}
+			return true;
 		}
-		else { 
+		else if(oldPos[1] == newPos[1]) { 
 			from = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
 			to = oldPos[0]>newPos[0] ? oldPos[0] : newPos[0]; 
 			for(int j=from+1; j<to; j++) {
 				if(table[j][oldPos[1]] != null) return false;
 			}
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 	
 	public boolean checkDiagonalLine(int[] oldPos, int[] newPos) {
 		int from[] = new int[2];
-		from[0] = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
-		from[1] = oldPos[1]<newPos[1] ? oldPos[1] : newPos[1];
-		for(int i=1; i<this.absDiff(oldPos[0], newPos[0]); i++) {
-			if(table[from[0]+i][from[1]+i] != null) return false;
+		if(this.absDiff(oldPos[0], newPos[0]) == this.absDiff(oldPos[1], newPos[1])) {
+			from[0] = oldPos[0]<newPos[0] ? oldPos[0] : newPos[0];
+			from[1] = oldPos[1]<newPos[1] ? oldPos[1] : newPos[1];
+			for(int i=1; i<this.absDiff(oldPos[0], newPos[0]); i++) {
+				if(table[from[0]+i][from[1]+i] != null) return false;
+			}
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 
 	public int absDiff(int x, int y) {
@@ -283,7 +329,7 @@ public class Table {
 	}
 	
 	public void displayInfo() {
-		String output = "\n\n";
+		String output = "\n\n----------------------------------------------------\n";
 		if(this.players[0] == null)
 			return;
 		output += this.players[0].toString() + "\n";
@@ -294,8 +340,8 @@ public class Table {
 		for(int i=7; i>=0; i--) {
 			output += i+1 + "     ";
 			for(int j=0; j<8; j++) {
-				if(table[i][j] != null)
-					output += "| " + table[i][j].getMark() + " | ";
+				if(table[i][j] != null && table[i][j].getName() != "Shadow")
+					output += "|" + table[i][j].getColorMark() + " " + table[i][j].getMark() + "| ";
 				else
 					output += "|   | ";
 			}
@@ -306,6 +352,8 @@ public class Table {
 		for(int j=0; j<8; j++) {
 			output += (char) (j+(int) 'A') + "     ";
 		}
+		
+		output += "\n Shadow piece : " + Arrays.toString(((Shadow)this.shadow).getPos());
 		System.out.println(output);
 	}
 	
