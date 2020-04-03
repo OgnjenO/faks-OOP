@@ -11,6 +11,7 @@ public class Table {
 	private Scanner sc;
 	private Piece shadow = new Shadow();
 	private boolean autoCheck = false;
+	private boolean moveWithMethods = false;
 	
 	public Table() {
 		this.setupTable();
@@ -116,13 +117,16 @@ public class Table {
 		if(Character.toLowerCase(choice) == 'y') while(!this.manualSetupGame());
 		else if(Character.toLowerCase(choice) == 'n') {
 			System.out.println("The game configuration for game setup : ");
+			System.out.println("Moving pieces with conosle (Commands)");
 			System.out.println("Random colors");
 			System.out.println("Manual checkmate check (Command checkmate)");
 			System.out.println("Manual draw check (No legal moves) (Command draw-nlm)");
 			System.out.println("Manual draw check (Impossible checkmate) (Command draw-nocm)");
 			System.out.println("Asking for draw allowed (Command draw-ask)");
 			System.out.println("");
+			while(!this.movePieceWithMethods('n'));
 			while(!this.colorAssignment('y'));
+			this.initiateGame();
 		}
 		else {
 			System.err.println("You need to input either \"Y\" or \"N\" !");
@@ -137,6 +141,11 @@ public class Table {
 		char choice;
 		choice = sc.next().charAt(0);
 		if(!colorAssignment(choice)) return false;
+		System.out.println("Move pieces with methods instead of console ? (y/n)");
+		choice = sc.next().charAt(0);
+		if(!movePieceWithMethods(choice)) return false;
+		sc.nextLine();
+		this.initiateGame();
 		return true;
 	}
 	
@@ -151,9 +160,7 @@ public class Table {
 			this.players[1-index].setColor("Black");
 			this.players[1-index].setKingPos(0, 7);
 			this.players[1-index].setKingPos(1, 4);
-			System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
 			this.turn = index;
-			sc.nextLine();
 			this.setupPlayers();
 			return true;
 		}
@@ -179,7 +186,6 @@ public class Table {
 					this.players[1-in].setColor("Black");
 					this.players[1-in].setKingPos(7, 0);
 					this.players[1-in].setKingPos(7, 4);
-					System.out.println("To move a piece specify the starting position and then the ending position (eg. A2 A4)");
 					this.turn = in;
 					this.setupPlayers();
 					return true;
@@ -196,23 +202,64 @@ public class Table {
 		}
 	}
 	
-	public void setupPlayers() {
-		this.players[0].setupPlayer();
-		this.players[1].setupPlayer();
-		this.initiateGame();
-	}
-	
-	public void initiateGame() {
-		while(true) {
-			this.displayInfo();
-			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-			while(!this.movePiece());
-			this.changeTurn();
+	public boolean movePieceWithMethods(char choice) {
+		if(Character.toLowerCase(choice) == 'y') {
+			System.out.println("Use makeAMove(\"A2 A4\") method to make a move");
+			this.moveWithMethods = true;
+			return true;
+		}
+		else if(Character.toLowerCase(choice) == 'n') {
+			System.out.println("Moving pieces with console is enabled");
+			sc.nextLine();
+			this.moveWithMethods = false;
+			return true;
+		}
+		else {
+			System.err.println("You need to input either \"Y\" or \"N\" !");
+			return false;
 		}
 	}
 	
-	public boolean movePiece() {
-		String[] input = sc.nextLine().split(" ");
+	public void setupPlayers() {
+		this.players[0].setupPlayer();
+		this.players[1].setupPlayer();
+	}
+	
+	public void initiateGame() {
+		System.out.println("\n\nTo move a piece specify the starting position and then the ending position (eg. A2 A4)");
+		this.displayInfo();
+		if(this.moveWithMethods) return;
+		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+		while(true) {
+			while(!this.movePiece(""));
+			this.changeTurn();
+			this.displayInfo();
+			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+		}
+	}
+	
+	public void makeAMove(String input) {
+		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
+		System.out.println("Press any button to make the next move");
+		sc.nextLine();
+		System.out.println(input);
+		if(this.movePiece(input)) this.changeTurn();
+		this.displayInfo();
+	}
+	
+	public String[] getMoveFromScanner() {
+		return sc.nextLine().split(" ");
+	}
+	
+	public String[] getMoveFromString(String move) {
+		return move.split(" ");
+	}
+	
+	public boolean movePiece(String move) {
+		String[] input;
+		if(this.moveWithMethods) input = getMoveFromString(move);
+		else input = getMoveFromScanner();
+
 		if(
 			input.length != 2 || input[0].length() != 2 || input[1].length() != 2
 		) {
@@ -258,7 +305,7 @@ public class Table {
 			return false;
 		}
 		
-		if(table[oldPos[0]][oldPos[1]].getMark() == 'X' && this.checkEnemyKingAround(this.players[this.turn], newPos)) {
+		if(table[oldPos[0]][oldPos[1]].getMark() == 'X' && Check.checkEnemyKingAround(this.players[this.turn], newPos, table)) {
 			System.err.println("Invalid input. Enemy kings can not stand next to each other");
 			return false;
 		}
@@ -277,7 +324,7 @@ public class Table {
 			this.players[this.turn].setKingPos(newPos);
 		}
 		
-		if(this.checkCheck(this.players[this.turn], this.players[this.turn].getKingPos())) {
+		if(Check.checkCheck(this.players[this.turn], this.players[this.turn].getKingPos(), table)) {
 			System.err.println("Invalid input. You can not move a piece in a way that makes you end up in check");
 			if(table[newPos[0]][newPos[1]].getMark() == 'X') {
 				this.players[this.turn].setKingPos(oldPos);
@@ -292,161 +339,13 @@ public class Table {
 		if(newP != null && newP.getName() != "Shadow") {
 			System.out.print("   |   Took " + newP.getName());
 		}
-		System.out.println();
+		// for(int i=0; i<40; i++) System.out.println();
 		
 		this.checkShadow();
 		
 		return true;
 	}
-	
-	public boolean checkCheck(Player p, int[] pos) {
-		return this.checkAttackerDiagonalLine(p, pos) || this.checkAttackerKnights(p, pos) || this.checkAttackerStraightLine(p, pos);
-	}
-	
-	public boolean checkAttackerKnights(Player p, int[] pos) {
-		int i, j;
-		i = pos[0];
-		j = pos[1];
-		
-		i += 2; j += 1;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i -= 2; j -= 1;
-		
-		i += 2; j -= 1;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i -= 2; j += 1;
-		
-		i -= 2; j += 1;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i += 2; j -= 1;
-		
-		i -= 2; j -= 1;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i += 2; j += 1;
-		
-		i += 1; j += 2;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i -= 1; j -= 2;
-		
-		i += 1; j -= 2;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i -= 1; j += 2;
-		
-		i -= 1; j += 2;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i += 1; j -= 2;
-		
-		i -= 1; j -= 2;
-		if(isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'K') return true;
-		i += 1; j += 2;
-		
-		return false;
-	}
-	
-	public boolean checkAttackerDiagonalLine(Player p, int[] pos) {
-		int yinc = p.getColor() == "White" ? 1 : -1;
-		
-		int x = pos[1];
-		int y = pos[0]+yinc;
-		
-		if(this.isInBounds(x+1, y) && table[x+1][y] != null && table[x+1][y].getMark() == 'P' && table[x+1][y].getColor() != p.getColor()) return true;
-		if(this.isInBounds(x-1, y) && table[x-1][y] != null && table[x-1][y].getMark() == 'P' && table[x-1][y].getColor() != p.getColor()) return true;
-		
-		for(int i=pos[0]+1, j=pos[1]+1; i<8 && j<8; i++, j++) {
-			if(table[i][j] != null)
-				if(table[i][j].getColor() != p.getColor() && (table[i][j].getMark() == 'Q' || table[i][j].getMark() == 'R'))
-					return true;
-				else break;
-		}
-		
-		for(int i=pos[0]-1, j=pos[1]-1; i>-1 && j>-1; i--, j--) {
-			if(table[i][j] != null)
-				if(table[i][j].getColor() != p.getColor() && (table[i][j].getMark() == 'Q' || table[i][j].getMark() == 'R'))
-					return true;
-				else break;
-		}
-		
-		for(int i=pos[0]+1, j=pos[1]-1; i<8 && j>-1; i++, j--) {
-			if(table[i][j] != null)
-				if(table[i][j].getColor() != p.getColor() && (table[i][j].getMark() == 'Q' || table[i][j].getMark() == 'R'))
-					return true;
-				else break;
-		}
-		
-		for(int i=pos[0]-1, j=pos[1]+1; i>-1 && j<8; i--, j++) {
-			if(table[i][j] != null)
-				if(table[i][j].getColor() != p.getColor() && (table[i][j].getMark() == 'Q' || table[i][j].getMark() == 'R'))
-					return true;
-				else break;
-		}
-		
-		return false;
-	}
-	
-	public boolean checkAttackerStraightLine(Player p, int[] pos) {		
-		for(int i=pos[0]+1; i<8; i++)
-			if(table[i][pos[1]] != null)
-				if(table[i][pos[1]].getColor() != p.getColor() && (table[i][pos[1]].getMark() == 'Q' || table[i][pos[1]].getMark() == 'R'))
-					return true;
-				else
-					break;
-		
-		for(int i=pos[0]-1; i>-1; i--)
-			if(table[i][pos[1]] != null)
-				if(table[i][pos[1]].getColor() != p.getColor() && (table[i][pos[1]].getMark() == 'Q' || table[i][pos[1]].getMark() == 'R'))
-					return true;
-				else
-					break;
-		
-		for(int j=pos[1]+1; j<8; j++)
-			if(table[pos[0]][j] != null)
-				if(table[pos[0]][j].getColor() != p.getColor() && (table[pos[0]][j].getMark() == 'Q' || table[pos[0]][j].getMark() == 'R'))
-					return true;
-				else
-					break;
-		
-		for(int j=pos[1]-1; j>-1; j--)
-			if(table[pos[0]][j] != null)
-				if(table[pos[0]][j].getColor() != p.getColor() && (table[pos[0]][j].getMark() == 'Q' || table[pos[0]][j].getMark() == 'R'))
-					return true;
-				else
-					break;
-		
-		return false;
-	}
-	
-	public boolean checkEnemyKingAround(Player p, int[] pos) {
-		int i, j;
-		i = pos[0];
-		j = pos[1];
-		
-		i += 1;
-		for(int t = -1; t<2; t++)
-			if(this.isInBounds(i, j) && table[i][j+t] != null && table[i][j+t].getColor() != p.getColor() && table[i][j+t].getMark() == 'X') return true;
-		i -= 2;
-		for(int t = -1; t<2; t++)
-			if(this.isInBounds(i, j) && table[i][j+t] != null && table[i][j+t].getColor() != p.getColor() && table[i][j+t].getMark() == 'X') return true;
-		
-		i += 1;
-		
-		j += 1;
-		if(this.isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'X') return true;
-		j -= 2;
-		if(this.isInBounds(i, j) && table[i][j] != null && table[i][j].getColor() != p.getColor() && table[i][j].getMark() == 'X') return true;
-		
-		return false;
-	}
-	
-	public boolean isInBounds(int i, int j) {
-		if(i>7 || i<0 || j>7 || i<0) return false;
-		return true;
-	}
-	
-	public boolean isInBounds(int[] pos) {
-		int i=pos[0];
-		int j=pos[1];
-		return isInBounds(i, j);
-	}
+
 	
 	public void checkShadow() {
 		Shadow s = (Shadow) this.shadow;
