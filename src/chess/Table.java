@@ -1,16 +1,10 @@
 package chess;
 
-import java.util.Arrays;
-import java.util.InputMismatchException;
-import java.util.Scanner;
-
 public class Table {
 	private Player[] players = new Player[2];
 	private Piece[][] table = new Piece[8][8];
 	private int turn;
-	private Scanner sc;
 	private Piece shadow = new Shadow();
-	private boolean moveWithMethods = false;
 	
 	public Table() {
 		this.setupTable();
@@ -76,10 +70,16 @@ public class Table {
 		return true;
 	}
 	
+	public int getTurn() {
+		return turn;
+	}
+
+	public void setTurn(int turn) {
+		this.turn = turn;
+	}
+
 	public void setupTable() {
-		sc = new Scanner(System.in);
 		this.turn = -1;
-		this.moveWithMethods = false;
 		for(int i=0; i<8; i++) {
 			this.table[1][i] = new Pawn("White");
 			this.table[6][i] = new Pawn("Black");
@@ -105,32 +105,7 @@ public class Table {
 		System.out.println("Table setup completed");
 	}
 	
-	public boolean startGame() {
-		if(this.players[0] == null || this.players[1] == null) {
-			System.err.println("You need 2 players to start the game");
-			return false;
-		}
-		char choice;
-		
-		System.out.println("Manual setup ? (y/n)");
-		choice = sc.next().charAt(0);
-		if(Character.toLowerCase(choice) == 'y') while(!this.manualSetupGame());
-		else if(Character.toLowerCase(choice) == 'n') {
-			System.out.println("The game configuration for game setup : ");
-			System.out.println("Moving pieces with conosle (Commands)");
-			System.out.println("Random colors");
-			System.out.println("");
-			while(!this.movePieceWithMethods('n'));
-			while(!this.colorAssignment('y'));
-			this.initiateGame();
-		}
-		else {
-			System.err.println("You need to input either \"Y\" or \"N\" !");
-			return false;
-		}
-		
-		return true;
-	}
+	
 	
 	public boolean checkCheckMate() {
 		if(Check.checkCheckMate(this.players[this.turn], this)) {
@@ -140,154 +115,18 @@ public class Table {
 		return false;
 	}
 	
-	public boolean manualSetupGame() {
-		System.out.println("Random color assignment ? (y/n)");
-		char choice;
-		choice = sc.next().charAt(0);
-		if(!colorAssignment(choice)) return false;
-		System.out.println("Move pieces with methods instead of console ? (y/n)");
-		choice = sc.next().charAt(0);
-		if(!movePieceWithMethods(choice)) return false;
-		sc.nextLine();
-		this.initiateGame();
-		return true;
-	}
 	
-	public boolean colorAssignment(char choice) {
-		if(Character.toLowerCase(choice) == 'y') {
-			int index = (int) Math.round(Math.random());
-			System.out.println("WHITE : " + this.players[index].getName());
-			this.players[index].setColor("White");
-			this.players[index].setKingPos(0, 0);
-			this.players[index].setKingPos(1, 4);
-			System.out.println("BLACK : " + this.players[1-index].getName());
-			this.players[1-index].setColor("Black");
-			this.players[1-index].setKingPos(0, 7);
-			this.players[1-index].setKingPos(1, 4);
-			this.turn = index;
-			this.setupPlayers();
-			return true;
-		}
-		else if(Character.toLowerCase(choice) == 'n') {
-			System.out.println("Choose which player should be WHITE : ");
-			System.out.println("1 - " + this.players[0].getName());
-			System.out.println("2 - " + this.players[1].getName());
-			int in;
-			while(true) {
-				try {
-					in = sc.nextInt();
-					sc.nextLine();
-					if(in != 1 && in != 2) {
-						System.err.println("Please choose player 1 or player 2");
-						return false;
-					}
-					in--;
-					System.out.println("WHITE : " + this.players[in].getName());
-					this.players[in].setColor("White");
-					this.players[in].setKingPos(0, 0);
-					this.players[in].setKingPos(1, 4);
-					System.out.println("BLACK : " + this.players[1-in].getName());
-					this.players[1-in].setColor("Black");
-					this.players[1-in].setKingPos(0, 7);
-					this.players[1-in].setKingPos(1, 4);
-					this.turn = in;
-					this.setupPlayers();
-					return true;
-				}
-				catch (InputMismatchException e) {
-					System.err.println("Please input a number");
-					return false;
-				}
-			}
-		}
-		else {
-			System.err.println("You need to input either \"Y\" or \"N\" !");
-			return false;
-		}
-	}
 	
-	public boolean movePieceWithMethods(char choice) {
-		if(Character.toLowerCase(choice) == 'y') {
-			System.out.println("Use makeAMove(\"A2 A4\") method to make a move");
-			this.moveWithMethods = true;
-			return true;
-		}
-		else if(Character.toLowerCase(choice) == 'n') {
-			System.out.println("Moving pieces with console is enabled");
-			sc.nextLine();
-			this.moveWithMethods = false;
-			return true;
-		}
-		else {
-			System.err.println("You need to input either \"Y\" or \"N\" !");
-			return false;
-		}
-	}
+	
+	
+	
 	
 	public void setupPlayers() {
 		this.players[0].setupPlayer();
 		this.players[1].setupPlayer();
 	}
 	
-	public void initiateGame() {
-		System.out.println("\n\nTo move a piece specify the starting position and then the ending position (eg. A2 A4)");
-		this.displayInfo();
-		System.out.println("\n\n----------------------------------------------------\n----------------------------------------------------\n\n");
-		if(this.moveWithMethods) return;
-//		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-		boolean isValidMove = false;
-		while(true) {
-			isValidMove = this.movePiece("");
-			while(!isValidMove) {
-				if(this.checkCheckMate()) {
-					System.err.println("CHECKMATE");
-				}
-				isValidMove = this.movePiece("");
-			}
-			this.changeTurn();
-			this.displayInfo();
-//			System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-		}
-	}
-	
-	public void makeAMove(String input) {
-//		System.out.println("Waiting for " + this.players[this.turn].getName() + " (" + this.players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
-//		System.out.println("Press any button to make the next move");
-//		sc.nextLine();
-		System.out.println(input);
-		boolean isValidMove = this.movePiece(input);
-		if(isValidMove) {
-			this.changeTurn();
-			this.displayInfo();
-		}
-		if(this.checkCheckMate()) {
-			System.err.println("CHECKMATE");
-		}
-	}
-	
-	public String[] getMoveFromScanner() {
-		return sc.nextLine().split(" ");
-	}
-	
-	public String[] getMoveFromString(String move) {
-		return move.split(" ");
-	}
-	
-	public boolean movePiece(String move) {
-		String[] input;
-		if(this.moveWithMethods) input = getMoveFromString(move);
-		else input = getMoveFromScanner();
-
-		if(
-			input.length != 2 || input[0].length() != 2 || input[1].length() != 2
-		) {
-			System.err.println("Invalid format ("+ Arrays.toString(input) +"). Please use format A2 A4");
-			return false;
-		}
-		
-		char[] in = {Character.toLowerCase(input[0].charAt(0)), input[0].charAt(1), Character.toLowerCase(input[1].charAt(0)), input[1].charAt(1)};
-		int[] oldPos = {(int) in[1]-(int) '1', (int) in[0] - (int) 'a'};
-		int[] newPos = {(int) in[3]-(int) '1', (int) in[2] - (int) 'a'};
+	public boolean movePiece(int[] oldPos, int[] newPos) {
 		if(oldPos[0] < 0 || oldPos[0] > 7 || oldPos[1] < 0 || oldPos[1] > 7 || newPos[0] < 0 || newPos[0] > 7 || newPos[1] < 0 || newPos[1] > 7) {
 			System.err.println("Invalid input. Please use A-H and 1-8");
 			return false;
@@ -347,7 +186,7 @@ public class Table {
 			return false;
 		}
 		
-		System.out.print(oldP.getName() + " (" + oldP.getColor() + ") " + input[0] + " -> " + input[1]);
+		System.out.print(oldP.getName() + " (" + oldP.getColor() + ") "/* + input[0] + " -> " + input[1]*/);
 		if(newP != null && newP.getName() != "Shadow") {
 			System.out.println("   |   Took " + newP.getName());
 		}
