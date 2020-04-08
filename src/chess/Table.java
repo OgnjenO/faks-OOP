@@ -105,8 +105,6 @@ public class Table {
 		System.out.println("Table setup completed");
 	}
 	
-	
-	
 	public boolean checkCheckMate() {
 		if(Check.checkCheckMate(this.players[this.turn], this)) {
 			return true;
@@ -114,12 +112,6 @@ public class Table {
 		
 		return false;
 	}
-	
-	
-	
-	
-	
-	
 	
 	public void setupPlayers() {
 		this.players[0].setupPlayer();

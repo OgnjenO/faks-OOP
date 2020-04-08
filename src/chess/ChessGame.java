@@ -154,12 +154,12 @@ public class ChessGame {
 //		System.out.println("Waiting for " + players[this.turn].getName() + " (" + players[this.turn].getColor() + ") to make a turn (eg. A2 A4)");
 		boolean isValidMove = false;
 		while(true) {
-			isValidMove = this.movePiece("");
+			isValidMove = this.movePiece();
 			while(!isValidMove) {
 				if(t.checkCheckMate()) {
 					System.err.println("CHECKMATE");
 				}
-				isValidMove = this.movePiece("");
+				isValidMove = this.movePiece();
 			}
 			t.changeTurn();
 			t.displayInfo();
